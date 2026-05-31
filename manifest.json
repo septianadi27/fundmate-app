@@ -1,0 +1,22 @@
+{
+  "name": "FundMate - Pelacak Keuangan",
+  "short_name": "FundMate",
+  "description": "Lacak pengeluaran harian dan pahami arus kas bulanan bersama pasangan atau rekan.",
+  "start_url": "/fundmate/",
+  "display": "standalone",
+  "background_color": "#0F1117",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait",
+  "lang": "id",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "productivity"],
+  "screenshots": [],
+  "prefer_related_applications": false
+}

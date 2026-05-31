@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="id" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#6C5CE7" />
+  <meta name="description" content="FundMate — Lacak pengeluaran harian, pahami arus kas bulanan, dan kelola keuangan bersama pasangan atau rekan." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  
+  <title>FundMate — Pelacak Keuangan</title>
+  
+  <link rel="manifest" href="manifest.json?v=2" />
+  <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="%233b82f6" d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V192c0-35.3-28.7-64-64-64H80c-8.8 0-16-7.2-16-16s7.2-16 16-16H448c17.7 0 32-14.3 32-32s-14.3-32-32-32H64zM416 272a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/></svg>' type="image/svg+xml" />
+  <link rel="apple-touch-icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="%233b82f6" d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V192c0-35.3-28.7-64-64-64H80c-8.8 0-16-7.2-16-16s7.2-16 16-16H448c17.7 0 32-14.3 32-32s-14.3-32-32-32H64zM416 272a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/></svg>' />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- App CSS -->
+  <link href="css/app.css?v=2" rel="stylesheet" />
+
+  <!-- FontAwesome 6 Free -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              300: '#93c5fd',
+              400: '#60a5fa',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            },
+            dark: {
+              bg: '#0F1117',
+              card: '#1A1D28',
+              elevated: '#232636',
+              border: '#2D3348',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Anti-FOUC: apply saved dark mode before render -->
+  <script>
+    {
+      const cs = localStorage.getItem('fundmate-color-scheme');
+      if (cs === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.querySelector('meta[name="color-scheme"]').content = 'dark';
+      } else if (cs === 'light') {
+        document.documentElement.classList.remove('dark');
+        document.querySelector('meta[name="color-scheme"]').content = 'light';
+      }
+    }
+  </script>
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="css/app.css" />
+
+  <!-- Alpine.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <!-- QR Code Library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+</head>
+
+<body class="font-sans antialiased bg-[var(--bg-primary)] text-[var(--text-primary)] overflow-hidden select-none">
+  
+  <!-- ==================== APP ROOT ==================== -->
+  <div id="app" class="app-container" x-data="fundmate()" x-init="init()" x-cloak>
+
+    <!-- ==================== TOAST NOTIFICATIONS ==================== -->
+    <div class="fixed top-0 left-1/2 -translate-x-1/2 z-[999] w-full max-w-[430px] px-4 pt-3 pointer-events-none"
+         x-show="toast.show" x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-4">
+      <div class="toast pointer-events-auto" :class="'toast--' + toast.type">
+        <i class="fa-solid" :class="toast.icon"></i>
+        <span x-text="toast.message"></span>
+      </div>
+    </div>
+
+    <!-- ==================== SCREEN: ONBOARDING ==================== -->
+    <div class="screen" :class="{ 'active': screen === 'onboarding' }" x-show="screen === 'onboarding'">
+      <div class="flex flex-col items-center justify-center min-h-dvh px-6 py-8">
+        <!-- Logo Animation -->
+        <div class="mb-8 relative">
+          <div class="w-24 h-24 rounded-3xl bg-brand-500 flex items-center justify-center shadow-lg shadow-brand-500/30 animate-float">
+            <i class="fa-solid fa-wallet text-white text-4xl"></i>
+          </div>
+          <div class="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-[var(--accent-secondary)] flex items-center justify-center animate-bounce-slow">
+            <i class="fa-solid fa-coins text-white text-xs"></i>
+          </div>
+        </div>
+
+        <h1 class="text-3xl font-extrabold mb-2 text-brand-500">FundMate</h1>
+        <p class="text-[var(--text-secondary)] text-center text-sm mb-10 max-w-[260px] leading-relaxed">
+          Kelola keuangan harianmu dengan mudah, cepat, dan kolaboratif bersama pasangan 💜
+        </p>
+
+        <!-- Feature Highlights -->
+        <div class="w-full space-y-3 mb-10">
+          <div class="flex items-center gap-3 p-3 rounded-2xl bg-[var(--bg-card)] shadow-sm border border-[var(--border-color)]">
+            <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
+              <i class="fa-solid fa-chart-pie text-emerald-500 text-sm"></i>
+            </div>
+            <div>
+              <p class="text-xs font-semibold">Lacak Pengeluaran</p>
+              <p class="text-[10px] text-[var(--text-tertiary)]">Catat setiap transaksi dengan cepat</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 p-3 rounded-2xl bg-[var(--bg-card)] shadow-sm border border-[var(--border-color)]">
+            <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+              <i class="fa-solid fa-users text-blue-500 text-sm"></i>
+            </div>
+            <div>
+              <p class="text-xs font-semibold">Kolaborasi Real-time</p>
+              <p class="text-[10px] text-[var(--text-tertiary)]">Sinkron otomatis dengan pasangan</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 p-3 rounded-2xl bg-[var(--bg-card)] shadow-sm border border-[var(--border-color)]">
+            <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+              <i class="fa-solid fa-piggy-bank text-amber-500 text-sm"></i>
+            </div>
+            <div>
+              <p class="text-xs font-semibold">Target Tabungan</p>
+              <p class="text-[10px] text-[var(--text-tertiary)]">Wujudkan impian finansialmu</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="w-full space-y-3">
+          <button @click="screen = 'register'" class="btn-primary active-scale w-full" id="btn-start-new">
+            <i class="fa-solid fa-rocket mr-2"></i>
+            Mulai Baru
+          </button>
+          <button @click="showJoinSheet = true" class="btn-secondary active-scale w-full" id="btn-join">
+            <i class="fa-solid fa-qrcode mr-2"></i>
+            Gabung via QR / Link
+          </button>
+        </div>
+
+        <!-- Join Bottom Sheet -->
+        <div class="bottom-sheet-overlay" :class="{ 'active': showJoinSheet }" @click.self="showJoinSheet = false">
+          <div class="bottom-sheet" :class="{ 'active': showJoinSheet }">
+            <div class="bottom-sheet-handle"></div>
+            <h3 class="text-lg font-bold mb-4">Gabung Household</h3>
+            <p class="text-sm text-[var(--text-secondary)] mb-4">Masukkan kode yang dibagikan oleh pasangan/rekanmu:</p>
+            <div class="flex gap-2 mb-4">
+              <input type="text" x-model="joinCode" placeholder="Masukkan kode household..." 
+                     class="form-input flex-1" id="input-join-code" />
+              <button @click="startScanner()" class="w-12 h-12 flex-shrink-0 bg-brand-500 text-white rounded-xl flex items-center justify-center">
+                <i class="fa-solid fa-camera"></i>
+              </button>
+            </div>
+            <div id="qr-reader" class="mb-4 overflow-hidden rounded-xl w-full" style="display: none;"></div>
+            <button @click="joinExistingHousehold()" class="btn-primary active-scale w-full" :disabled="!joinCode.trim()" id="btn-join-submit">
+              Gabung Sekarang
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SCREEN: REGISTER & PIN SETUP ==================== -->
+    <div class="screen" :class="{ 'active': screen === 'register' }" x-show="screen === 'register'">
+      <div class="flex flex-col min-h-dvh px-6 py-8">
+        <!-- Back Button -->
+        <button @click="screen = 'onboarding'" class="self-start mb-6 w-10 h-10 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center">
+          <i class="fa-solid fa-arrow-left text-sm"></i>
+        </button>
+
+        <!-- Step 1: Name -->
+        <div x-show="registerStep === 1" x-transition>
+          <h2 class="text-2xl font-bold mb-2">Halo! 👋</h2>
+          <p class="text-[var(--text-secondary)] text-sm mb-8">Siapa nama panggilanmu?</p>
+          
+          <input type="text" x-model="userName" placeholder="contoh: Septian" maxlength="20"
+                 class="form-input w-full text-center text-xl font-semibold mb-6" id="input-username"
+                 @keyup.enter="userName.trim() && (registerStep = 2)" />
+
+          <!-- Option: Dummy or Clean -->
+          <div class="mb-6">
+            <p class="text-[var(--text-secondary)] text-sm text-center mb-3">Pilihan Data Awal:</p>
+            <div class="flex gap-2">
+              <button @click="useDummyData = true" class="flex-1 py-3 rounded-xl border transition-all flex flex-col items-center justify-center gap-1"
+                      :class="useDummyData ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30 text-brand-500' : 'border-[var(--border-color)] bg-[var(--bg-primary)]'">
+                <i class="fa-solid fa-database text-lg mb-1"></i>
+                <span class="text-xs font-semibold">Data Dummy</span>
+              </button>
+              <button @click="useDummyData = false" class="flex-1 py-3 rounded-xl border transition-all flex flex-col items-center justify-center gap-1"
+                      :class="!useDummyData ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30 text-brand-500' : 'border-[var(--border-color)] bg-[var(--bg-primary)]'">
+                <i class="fa-solid fa-leaf text-lg mb-1"></i>
+                <span class="text-xs font-semibold">Data Bersih</span>
+              </button>
+            </div>
+            <p class="text-[10px] text-[var(--text-tertiary)] mt-2 text-center" x-text="useDummyData ? 'Mulai dengan contoh transaksi dan akun.' : 'Mulai dari nol (hanya master kategori).'"></p>
+          </div>
+
+          <button @click="registerStep = 2" class="btn-primary active-scale w-full" :disabled="!userName.trim()" id="btn-next-pin">
+            Lanjut Buat PIN
+            <i class="fa-solid fa-arrow-right ml-2"></i>
+          </button>
+        </div>
+
+        <!-- Step 2: Create PIN -->
+        <div x-show="registerStep === 2" x-transition>
+          <h2 class="text-2xl font-bold mb-2">Buat PIN 🔒</h2>
+          <p class="text-[var(--text-secondary)] text-sm mb-6">4 digit PIN untuk keamananmu</p>
+
+          <!-- PIN Dots -->
+          <div class="pin-dots mb-8">
+            <template x-for="i in 4" :key="i">
+              <div class="pin-dot" :class="{ 'filled': pinInput.length >= i }"></div>
+            </template>
+          </div>
+
+          <!-- Numpad -->
+          <div class="numpad">
+            <template x-for="key in ['1','2','3','4','5','6','7','8','9','','0','del']" :key="key">
+              <button class="numpad-key active-scale" :class="{ 'invisible': key === '', 'numpad-key--action': key === 'del' }"
+                      @click="handlePinKey(key, 'create')" :disabled="key === ''">
+                <template x-if="key === 'del'">
+                  <i class="fa-solid fa-delete-left"></i>
+                </template>
+                <template x-if="key !== 'del' && key !== ''">
+                  <span x-text="key"></span>
+                </template>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Step 3: Confirm PIN -->
+        <div x-show="registerStep === 3" x-transition>
+          <h2 class="text-2xl font-bold mb-2">Konfirmasi PIN 🔐</h2>
+          <p class="text-[var(--text-secondary)] text-sm mb-6">Masukkan ulang PIN yang sama</p>
+
+          <div class="pin-dots mb-8" :class="{ 'shake': pinError }">
+            <template x-for="i in 4" :key="i">
+              <div class="pin-dot" :class="{ 'filled': pinConfirm.length >= i, 'error': pinError }"></div>
+            </template>
+          </div>
+
+          <div class="numpad">
+            <template x-for="key in ['1','2','3','4','5','6','7','8','9','','0','del']" :key="key">
+              <button class="numpad-key active-scale" :class="{ 'invisible': key === '', 'numpad-key--action': key === 'del' }"
+                      @click="handlePinKey(key, 'confirm')" :disabled="key === ''">
+                <template x-if="key === 'del'">
+                  <i class="fa-solid fa-delete-left"></i>
+                </template>
+                <template x-if="key !== 'del' && key !== ''">
+                  <span x-text="key"></span>
+                </template>
+              </button>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SCREEN: LOGIN PIN ==================== -->
+    <div class="screen" :class="{ 'active': screen === 'login' }" x-show="screen === 'login'">
+      <div class="flex flex-col items-center justify-center min-h-dvh px-6 py-8">
+        <div class="w-16 h-16 rounded-2xl bg-brand-500 flex items-center justify-center mb-6 shadow-lg shadow-brand-500/20">
+          <i class="fa-solid fa-lock text-white text-xl"></i>
+        </div>
+        
+        <h2 class="text-xl font-bold mb-1">Masukkan PIN</h2>
+        <p class="text-[var(--text-secondary)] text-sm mb-8" x-text="'Halo, ' + userName + '! 👋'"></p>
+
+        <div class="pin-dots mb-8" :class="{ 'shake': pinError }">
+          <template x-for="i in 4" :key="i">
+            <div class="pin-dot" :class="{ 'filled': pinInput.length >= i, 'error': pinError }"></div>
+          </template>
+        </div>
+
+        <div class="numpad">
+          <template x-for="key in ['1','2','3','4','5','6','7','8','9','','0','del']" :key="key">
+            <button class="numpad-key active-scale" :class="{ 'invisible': key === '', 'numpad-key--action': key === 'del' }"
+                    @click="handlePinKey(key, 'login')" :disabled="key === ''">
+              <template x-if="key === 'del'">
+                <i class="fa-solid fa-delete-left"></i>
+              </template>
+              <template x-if="key !== 'del' && key !== ''">
+                <span x-text="key"></span>
+              </template>
+            </button>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SCREEN: HOME DASHBOARD ==================== -->
+    <div class="screen" :class="{ 'active': screen === 'home' }" x-show="screen === 'home'">
+      <div class="flex flex-col min-h-dvh pb-24">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-5 pt-6 pb-4">
+          <div>
+            <p class="text-xs text-[var(--text-tertiary)]" x-text="getGreeting()"></p>
+            <h2 class="text-lg font-bold" x-text="'Halo, ' + userName + '! 👋'"></h2>
+          </div>
+          <button @click="showNotifications = !showNotifications" class="relative w-10 h-10 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center" id="btn-notifications">
+            <i class="fa-solid fa-bell text-sm"></i>
+            <div x-show="notifications.length > 0" class="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center" x-text="notifications.length"></div>
+          </button>
+        </div>
+
+        <!-- Balance Card -->
+        <div class="px-5 mb-5">
+          <div class="balance-card mesh-gradient" @click="showAccountSheet = true">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-medium text-white/70">Saldo Bulanan</span>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] text-white/50" x-text="currentMonthName"></span>
+                <i class="fa-solid fa-chevron-right text-[8px] text-white/40"></i>
+              </div>
+            </div>
+            <p class="text-3xl font-extrabold text-white mb-4" x-text="formatCurrencyFull(totalBalance)"></p>
+            <div class="flex items-center gap-4">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+                  <i class="fa-solid fa-arrow-down text-emerald-300 text-xs"></i>
+                </div>
+                <div>
+                  <p class="text-[10px] text-white/60">Pemasukan</p>
+                  <p class="text-xs font-bold text-white" x-text="formatCurrency(totalIncome)"></p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+                  <i class="fa-solid fa-arrow-up text-red-300 text-xs"></i>
+                </div>
+                <div>
+                  <p class="text-[10px] text-white/60">Pengeluaran</p>
+                  <p class="text-xs font-bold text-white" x-text="formatCurrency(totalExpense)"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="px-5 flex-1">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-bold">Transaksi Terakhir</h3>
+            <button @click="showFilteredHistory('all')" class="text-xs text-brand-500 font-semibold" id="btn-see-all-transactions">Lihat Semua</button>
+          </div>
+
+          <!-- Transaction List -->
+          <div class="space-y-2" x-show="transactions.length > 0">
+            <template x-for="tx in transactions.slice(0, 5)" :key="tx.id">
+              <div class="transaction-item cursor-pointer animate-fade-in-up" @click="viewTransactionDetail(tx)">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                     :style="'background-color: var(--cat-' + (getCategoryById(tx.category_id)?.color_index || 1) + ')'">
+                  <i :class="getCategoryById(tx.category_id)?.icon_class || 'fa-solid fa-circle'" class="text-sm" style="opacity:0.8"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold truncate" x-text="getCategoryById(tx.category_id)?.name || 'Lainnya'"></p>
+                  <p class="text-[11px] text-[var(--text-tertiary)]" x-text="tx.note || formatRelativeDate(tx.date)"></p>
+                </div>
+                <div class="text-right flex-shrink-0">
+                  <p class="text-sm font-bold" :class="{
+                    'text-emerald-500': tx.type === 'Income',
+                    'text-red-500': tx.type === 'Expense',
+                    'text-blue-500': tx.type === 'Transfer'
+                  }" x-text="(tx.type === 'Income' ? '+' : tx.type === 'Expense' ? '-' : '') + formatCurrency(tx.amount)"></p>
+                  <p class="text-[10px] text-[var(--text-tertiary)]" x-text="tx.created_by"></p>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Empty State -->
+          <div x-show="transactions.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
+            <div class="w-16 h-16 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center mb-4">
+              <i class="fa-solid fa-receipt text-[var(--text-tertiary)] text-xl"></i>
+            </div>
+            <p class="text-sm font-semibold mb-1">Belum Ada Transaksi</p>
+            <p class="text-xs text-[var(--text-tertiary)]">Mulai catat pengeluaranmu!</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==================== SCREEN: ANALYTICS ==================== -->
+    <div class="screen" :class="{ 'active': screen === 'analytics' }" x-show="screen === 'analytics'">
+      <div class="flex flex-col min-h-dvh pb-24">
+        <!-- Header -->
+        <div class="px-5 pt-6 pb-4 flex justify-between items-center">
+          <div>
+            <h2 class="text-lg font-bold">Analisis Keuangan</h2>
+            <p class="text-xs text-[var(--text-tertiary)]" x-show="analyticsPeriod === 'monthly'">Pilih bulan di samping</p>
+            <p class="text-xs text-[var(--text-tertiary)]" x-show="analyticsPeriod !== 'monthly'" x-text="currentMonthName + ' ' + currentYear"></p>
+          </div>
+          <select x-show="analyticsPeriod === 'monthly'" x-model="analyticsMonth" class="form-input text-xs px-2 py-1 h-8 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]">
+            <template x-for="m in availableMonths" :key="m.value">
+              <option :value="m.value" x-text="m.label"></option>
+            </template>
+          </select>
+        </div>
+
+        <!-- Period Tabs -->
+        <div class="px-5 mb-5">
+          <div class="flex bg-[var(--bg-card)] rounded-xl p-1 border border-[var(--border-color)]">
+            <button @click="analyticsPeriod = 'monthly'" class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all"
+                    :class="analyticsPeriod === 'monthly' ? 'bg-brand-500 text-white shadow-sm' : 'text-[var(--text-secondary)]'">Bulanan</button>
+            <button @click="analyticsPeriod = 'weekly'" class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all"
+                    :class="analyticsPeriod === 'weekly' ? 'bg-brand-500 text-white shadow-sm' : 'text-[var(--text-secondary)]'">Mingguan</button>
+            <button @click="analyticsPeriod = 'daily'" class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all"
+                    :class="analyticsPeriod === 'daily' ? 'bg-brand-500 text-white shadow-sm' : 'text-[var(--text-secondary)]'">Harian</button>
+          </div>
+        </div>
+
+        <!-- Monthly View: Donut Chart -->
+        <div x-show="analyticsPeriod === 'monthly'" class="px-5">
+          <div class="bento-card p-5 mb-4">
+            <h4 class="text-sm font-bold mb-4">Proporsi Pengeluaran</h4>
+            <div class="flex items-center justify-center mb-4">
+              <div class="donut-chart" :style="donutChartStyle">
+                <div class="donut-chart-center">
+                  <p class="text-lg font-extrabold" x-text="formatCurrency(totalExpense)"></p>
+                  <p class="text-[10px] text-[var(--text-tertiary)]">Total Keluar</p>
+                </div>
+              </div>
+            </div>
+            <!-- Legend -->
+            <div class="grid grid-cols-2 gap-2">
+              <template x-for="item in expenseByCategory" :key="item.name">
+                <div class="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors" @click="showFilteredHistory('category', item.id)">
+                  <div class="w-3 h-3 rounded-full flex-shrink-0" :style="'background-color: ' + item.color"></div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-[11px] font-medium truncate" x-text="item.name"></p>
+                  </div>
+                  <p class="text-[10px] font-semibold text-[var(--text-secondary)]" x-text="item.percentage + '%'"></p>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Income vs Expense Summary -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bento-card p-4 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors" @click="showFilteredHistory('type', 'Income')">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                  <i class="fa-solid fa-arrow-trend-up text-emerald-500 text-[10px]"></i>
+                </div>
+                <span class="text-[10px] text-[var(--text-tertiary)]">Pemasukan</span>
+              </div>
+              <p class="text-sm font-bold text-emerald-500" x-text="'+' + formatCurrency(totalIncome)"></p>
+            </div>
+            <div class="bento-card p-4 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors" @click="showFilteredHistory('type', 'Expense')">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="w-6 h-6 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                  <i class="fa-solid fa-arrow-trend-down text-red-500 text-[10px]"></i>
+                </div>
+                <span class="text-[10px] text-[var(--text-tertiary)]">Pengeluaran</span>
+              </div>
+              <p class="text-base font-bold text-red-500" x-text="formatCurrency(totalExpense)"></p>
+            </div>
+          </div>
+
+          <!-- Insights -->
+          <div class="space-y-3 mt-3">
+            <div class="bento-card p-4 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center">
+                  <i class="fa-solid fa-chart-line text-brand-500"></i>
+                </div>
+                <div>
+                  <p class="text-[10px] text-[var(--text-tertiary)]">Bulan Lalu</p>
+                  <p class="text-sm font-bold" :class="momChangePercentage > 0 ? 'text-red-500' : 'text-emerald-500'" 
+                     x-text="(momChangePercentage > 0 ? '+' : '') + momChangePercentage + '%'"></p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="bento-card p-4 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                  <i class="fa-solid fa-calendar-day text-blue-500"></i>
+                </div>
+                <div>
+                  <p class="text-[10px] text-[var(--text-tertiary)]">Rata-rata Harian</p>
+                  <p class="text-sm font-bold" x-text="formatCurrency(averageDailySpend)"></p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bento-card p-4 flex items-center justify-between" x-show="topCategory">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center" :style="'background-color: ' + (topCategory ? topCategory.color : '#000') + '33'">
+                  <i class="fa-solid fa-star" :style="'color: ' + (topCategory ? topCategory.color : '#000')"></i>
+                </div>
+                <div>
+                  <p class="text-[10px] text-[var(--text-tertiary)]">Kategori Terbesar</p>
+                  <p class="text-sm font-bold" x-text="topCategory ? topCategory.name : '-'"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weekly View: Bar Chart -->
+        <div x-show="analyticsPeriod === 'weekly'" class="px-5">
+          <div class="bento-card p-5">
+            <h4 class="text-sm font-bold mb-4">Pengeluaran Mingguan</h4>
+            <div class="bar-chart mt-4 !h-40 !items-center">
+              <template x-for="(day, idx) in weeklyData" :key="idx">
+                <div class="flex-1 flex flex-col items-center justify-center cursor-pointer h-full" @click="showFilteredHistory('day', day.fullDate)">
+                  <!-- Income (Up) -->
+                  <div class="w-full flex flex-col justify-end items-center h-1/2 pb-1 relative">
+                    <span class="text-[8px] font-medium text-emerald-500 absolute -top-4" x-text="formatCurrency(day.income)" x-show="day.income > 0"></span>
+                    <div class="w-4 bg-emerald-500 rounded-t-sm transition-all" 
+                         :style="'height: ' + (day.income > 0 ? day.incomeHeight : 0) + '%;'" 
+                         :class="{'opacity-100': day.isToday, 'opacity-60': !day.isToday}"></div>
+                  </div>
+                  
+                  <!-- Zero line -->
+                  <div class="w-full h-[2px] bg-[var(--border-color)] z-10"></div>
+
+                  <!-- Expense (Down) -->
+                  <div class="w-full flex flex-col justify-start items-center h-1/2 pt-1 relative">
+                    <div class="w-4 bg-red-500 rounded-b-sm transition-all" 
+                         :style="'height: ' + (day.expense > 0 ? day.expenseHeight : 0) + '%;'" 
+                         :class="{'opacity-100': day.isToday, 'opacity-60': !day.isToday}"></div>
+                    <span class="text-[8px] font-medium text-red-500 absolute -bottom-4" x-text="formatCurrency(day.expense)" x-show="day.expense > 0"></span>
+                  </div>
+                  
+                  <span class="text-[10px] text-[var(--text-tertiary)] mt-6 font-medium" x-text="day.label"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-3 mt-4">
+            <div class="bento-card p-4">
+              <span class="text-[10px] text-[var(--text-tertiary)] block mb-1">Total Minggu Ini</span>
+              <p class="text-sm font-bold text-red-500" x-text="formatCurrency(totalWeeklyExpense)"></p>
+            </div>
+            <div class="bento-card p-4" x-show="topWeeklyCategory">
+              <span class="text-[10px] text-[var(--text-tertiary)] block mb-1">Pengeluaran Terbesar</span>
+              <div class="flex items-center gap-2 mt-1">
+                <div class="w-6 h-6 rounded-lg flex items-center justify-center" :style="'background-color: var(--cat-' + (topWeeklyCategory?.category.color_index || 1) + ')'">
+                  <i :class="topWeeklyCategory?.category.icon_class" class="text-[10px]" style="opacity:0.8"></i>
+                </div>
+                <p class="text-xs font-bold truncate" x-text="topWeeklyCategory?.category.name"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Daily View -->
+        <div x-show="analyticsPeriod === 'daily'" class="px-5">
+          <div class="bento-card p-5">
+            <h4 class="text-sm font-bold mb-4">Pengeluaran Hari Ini</h4>
+            <div class="text-center py-4">
+              <p class="text-3xl font-extrabold text-red-500" x-text="formatCurrency(todayExpense)"></p>
+              <p class="text-xs text-[var(--text-tertiary)] mt-1">Total pengeluaran hari ini</p>
+            </div>
+            <div class="mt-2 bg-[var(--bg-primary)] p-3 rounded-xl border border-[var(--border-color)] flex items-center justify-between" x-show="topDailyCategory">
+              <div>
+                <p class="text-[10px] text-[var(--text-tertiary)]">Pengeluaran Terbesar</p>
+                <div class="flex items-center gap-2 mt-1">
+                  <div class="w-5 h-5 rounded-md flex items-center justify-center" :style="'background-color: var(--cat-' + (topDailyCategory?.category.color_index || 1) + ')'">
+                    <i :class="topDailyCategory?.category.icon_class" class="text-[8px]" style="opacity:0.8"></i>
+                  </div>
+                  <p class="text-xs font-bold" x-text="topDailyCategory?.category.name"></p>
+                </div>
+              </div>
+              <p class="text-xs font-bold text-red-500" x-text="formatCurrency(topDailyCategory?.amount)"></p>
+            </div>
+            <div class="space-y-2 mt-4">
+              <template x-for="tx in todayTransactions" :key="tx.id">
+                <div class="transaction-item cursor-pointer animate-fade-in-up" @click="viewTransactionDetail(tx)">
+                  <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                       :style="'background-color: var(--cat-' + (getCategoryById(tx.category_id)?.color_index || 1) + ')'">
+                    <i :class="getCategoryById(tx.category_id)?.icon_class || 'fa-solid fa-circle'" class="text-xs" style="opacity:0.8"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs font-semibold truncate" x-text="getCategoryById(tx.category_id)?.name || 'Lainnya'"></p>
+                    <p class="text-[10px] text-[var(--text-tertiary)]" x-text="formatTime(tx.date)"></p>
+                  </div>
+                  <p class="text-xs font-bold" :class="tx.type === 'Income' ? 'text-emerald-500' : 'text-red-500'"
+                     x-text="(tx.type === 'Income' ? '+' : '-') + formatCurrency(tx.amount)"></p>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SCREEN: SAVING GOALS ==================== -->
+    <div class="screen" :class="{ 'active': screen === 'goals' }" x-show="screen === 'goals'">
+      <div class="flex flex-col min-h-dvh pb-24">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-5 pt-6 pb-4">
+          <div>
+            <h2 class="text-lg font-bold">Target Tabungan</h2>
+            <p class="text-xs text-[var(--text-tertiary)]" x-text="planners.length + ' target aktif'"></p>
+          </div>
+          <button @click="showAddGoalSheet = true" class="w-10 h-10 rounded-full bg-brand-500 text-white flex items-center justify-center shadow-md shadow-brand-500/30" id="btn-add-goal">
+            <i class="fa-solid fa-plus text-sm"></i>
+          </button>
+        </div>
+
+        <!-- Empty State -->
+        <div x-show="planners.length === 0" class="flex-1 flex flex-col items-center justify-center px-5 text-center">
+          <div class="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center mb-4">
+            <i class="fa-solid fa-piggy-bank text-amber-500 text-3xl"></i>
+          </div>
+          <h3 class="text-base font-bold mb-2">Belum Ada Target</h3>
+          <p class="text-xs text-[var(--text-tertiary)] mb-6 max-w-[220px]">Mulai tentukan target tabunganmu dan wujudkan impian finansialmu! 🎯</p>
+          <button @click="showAddGoalSheet = true" class="btn-primary active-scale px-6">
+            <i class="fa-solid fa-plus mr-2"></i> Buat Target Pertama
+          </button>
+        </div>
+
+        <!-- Goals List Active -->
+        <div x-show="planners.filter(g => g.current_amount < g.target_amount).length > 0" class="px-5 space-y-3 mb-6">
+          <h4 class="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Tabungan Aktif</h4>
+          <template x-for="goal in planners.filter(g => g.current_amount < g.target_amount)" :key="goal.id">
+            <div class="bento-card p-4">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 rounded-xl flex items-center justify-center"
+                       :class="goal.type === 'Goal' ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-amber-100 dark:bg-amber-900/30'">
+                    <i :class="goal.type === 'Goal' ? 'fa-solid fa-bullseye text-emerald-500' : 'fa-solid fa-file-invoice-dollar text-amber-500'" class="text-xs"></i>
+                  </div>
+                  <div>
+                    <p class="text-sm font-bold" x-text="goal.title"></p>
+                    <p class="text-[10px] text-[var(--text-tertiary)]" x-text="goal.type === 'Goal' ? 'Target Tabungan' : 'Target Tagihan'"></p>
+                  </div>
+                </div>
+                <button @click="showContributeGoal(goal)" class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center">
+                  <i class="fa-solid fa-plus text-brand-500 text-xs"></i>
+                </button>
+              </div>
+              
+              <!-- Progress -->
+              <div class="mb-2">
+                <div class="progress-bar">
+                  <div class="progress-bar-fill" :style="'width: ' + Math.min(100, (goal.current_amount / goal.target_amount * 100)) + '%'"></div>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <p class="text-xs font-semibold" x-text="formatCurrency(goal.current_amount) + ' / ' + formatCurrency(goal.target_amount)"></p>
+                <p class="text-[10px] font-semibold text-brand-500" x-text="Math.round(goal.current_amount / goal.target_amount * 100) + '%'"></p>
+              </div>
+              <p class="text-[10px] text-[var(--text-tertiary)] mt-1" x-text="'Sisa ' + formatCurrency(Math.max(0, goal.target_amount - goal.current_amount))"></p>
+            </div>
+          </template>
+        </div>
+
+        <!-- Goals List Fulfilled -->
+        <div x-show="planners.filter(g => g.current_amount >= g.target_amount).length > 0" class="px-5 space-y-3 mb-6">
+          <h4 class="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Target Terpenuhi 🎉</h4>
+          <template x-for="goal in planners.filter(g => g.current_amount >= g.target_amount)" :key="goal.id">
+            <div class="bento-card p-4 opacity-75">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 rounded-xl flex items-center justify-center bg-brand-100 dark:bg-brand-900/30">
+                    <i class="fa-solid fa-check-double text-brand-500 text-xs"></i>
+                  </div>
+                  <div>
+                    <p class="text-sm font-bold" x-text="goal.title"></p>
+                    <p class="text-[10px] text-[var(--text-tertiary)]" x-text="goal.type === 'Goal' ? 'Target Tabungan Selesai' : 'Tagihan Lunas'"></p>
+                  </div>
+                </div>
+                <!-- NO ADD BUTTON -->
+              </div>
+              
+              <!-- Progress -->
+              <div class="mb-2">
+                <div class="progress-bar">
+                  <div class="progress-bar-fill !bg-brand-500" style="width: 100%"></div>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <p class="text-xs font-semibold" x-text="formatCurrency(goal.target_amount) + ' Terkumpul'"></p>
+                <p class="text-[10px] font-semibold text-brand-500">100%</p>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==================== SCREEN: PROFILE & SETTINGS ==================== -->
+    <div class="screen" :class="{ 'active': screen === 'profile' }" x-show="screen === 'profile'">
+      <div class="flex flex-col min-h-dvh pb-24">
+        <!-- Header -->
+        <div class="flex flex-col items-center px-5 pt-8 pb-6">
+          <div class="w-20 h-20 rounded-full bg-brand-500 flex items-center justify-center mb-3 shadow-lg shadow-brand-500/20">
+            <span class="text-2xl font-bold text-white" x-text="userName.charAt(0).toUpperCase()"></span>
+          </div>
+          <h2 class="text-lg font-bold" x-text="userName"></h2>
+          <p class="text-xs text-[var(--text-tertiary)]">Anggota Household</p>
+        </div>
+
+        <!-- QR Sync Card -->
+        <div class="px-5 mb-5">
+          <div class="bento-card p-5 text-center relative">
+            <h4 class="text-sm font-bold mb-3">Sinkronisasi</h4>
+            <p class="text-xs text-[var(--text-tertiary)] mb-4">Bagikan kode atau link agar pasanganmu bisa bergabung</p>
+            <div id="qrcode-container" class="flex items-center justify-center mb-4 bg-white rounded-xl p-4 mx-auto w-fit"></div>
+            <div class="flex flex-col gap-3">
+              <div class="flex items-center gap-2 justify-between bg-[var(--bg-primary)] rounded-xl px-4 py-3 w-full">
+                <code class="text-xs font-semibold tracking-wider truncate" x-text="householdId || '---'"></code>
+                <button @click="copyShareLink()" class="text-brand-500 flex-shrink-0">
+                  <i class="fa-solid fa-copy text-sm"></i>
+                </button>
+              </div>
+              <button @click="shareLink()" class="bg-brand-500 text-white w-full rounded-xl px-4 py-3 flex items-center justify-center gap-2 hover:bg-brand-600 transition-colors shadow-md shadow-brand-500/20">
+                <i class="fa-solid fa-share-nodes text-sm"></i>
+                <span class="text-xs font-bold">Share Link</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings Menu -->
+        <div class="px-5 space-y-1">
+          <h4 class="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2 px-1">Pengaturan</h4>
+          
+          <button @click="openEditProfile()" class="settings-item" id="btn-edit-profile">
+            <div class="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+              <i class="fa-solid fa-user-pen text-blue-500 text-sm"></i>
+            </div>
+            <span class="flex-1 text-sm font-medium text-left">Edit Profil</span>
+            <i class="fa-solid fa-chevron-right text-xs text-[var(--text-tertiary)]"></i>
+          </button>
+
+          <button @click="showManageCategories = true" class="settings-item">
+            <div class="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+              <i class="fa-solid fa-tags text-purple-500 text-sm"></i>
+            </div>
+            <span class="flex-1 text-sm font-medium text-left">Kelola Kategori</span>
+            <i class="fa-solid fa-chevron-right text-xs text-[var(--text-tertiary)]"></i>
+          </button>
+
+          <button @click="showAccountSheet = true" class="settings-item">
+            <div class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+              <i class="fa-solid fa-building-columns text-emerald-500 text-sm"></i>
+            </div>
+            <span class="flex-1 text-sm font-medium text-left">Kelola Akun</span>
+            <i class="fa-solid fa-chevron-right text-xs text-[var(--text-tertiary)]"></i>
+          </button>
+
+          <!-- PIN Toggle -->
+          <div class="settings-item">
+            <div class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+              <i class="fa-solid fa-lock text-amber-500 text-sm"></i>
+            </div>
+            <span class="flex-1 text-sm font-medium">Kunci PIN</span>
+            <label class="toggle-switch">
+              <input type="checkbox" x-model="isPinActive" @change="togglePinSetting()" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <!-- Dark Mode Toggle -->
+          <div class="settings-item">
+            <div class="w-9 h-9 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+              <i class="fa-solid fa-palette text-gray-500 dark:text-gray-300 text-sm"></i>
+            </div>
+            <span class="flex-1 text-sm font-medium">Tema Tampilan</span>
+            <select x-model="appTheme" @change="applyTheme()" class="form-input text-xs py-1 px-2 h-auto min-w-[90px] text-right bg-transparent border-none">
+              <option value="auto">Auto (Sistem)</option>
+              <option value="light">Terang</option>
+              <option value="dark">Gelap</option>
+            </select>
+          </div>
+
+          <!-- Clear Data Household -->
+          <button @click="showClearDataModal = true" class="settings-item w-full mt-4 !bg-red-50 dark:!bg-red-900/20 border border-red-100 dark:border-red-900/30">
+            <div class="w-9 h-9 rounded-xl bg-red-100 dark:bg-red-900/50 flex items-center justify-center">
+              <i class="fa-solid fa-trash text-red-500 text-sm"></i>
+            </div>
+            <span class="flex-1 text-sm font-medium text-left text-red-600 dark:text-red-400">Hapus Data Household</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==================== GLOBAL BOTTOM SHEETS ==================== -->
+      <!-- ===== BOTTOM SHEET: Account List ===== -->
+      <div class="bottom-sheet-overlay" :class="{ 'active': showAccountSheet }" @click.self="showAccountSheet = false">
+        <div class="bottom-sheet bottom-sheet--tall" :class="{ 'active': showAccountSheet }">
+          <div class="bottom-sheet-handle"></div>
+          <h3 class="text-lg font-bold mb-4">Daftar Akun</h3>
+          <div class="pt-2 pb-2">
+            <template x-for="(acc, index) in accounts" :key="acc.id">
+              <div class="bento-card p-4 flex items-center gap-4 mb-3 animate-fade-in-up stagger-item" :style="`animation-delay: ${index * 50}ms`">
+                <div class="w-12 h-12 rounded-2xl bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center flex-shrink-0">
+                  <i :class="acc.icon_class" class="text-brand-500 text-lg"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-base font-bold text-[var(--text-primary)] truncate" x-text="acc.name"></p>
+                  <p class="text-xs text-[var(--text-tertiary)]" x-text="acc.type + ' · ' + acc.owner"></p>
+                </div>
+                <p class="text-base font-extrabold tracking-tight" x-text="formatCurrencyFull(acc.balance)" :class="{'text-red-500': acc.balance < 0}"></p>
+              </div>
+            </template>
+          </div>
+          <button @click="showAddAccountSheet = true; showAccountSheet = false" class="w-full mt-2 p-4 rounded-2xl border-2 border-dashed border-[var(--border-color)] text-brand-500 font-bold hover:bg-brand-50 dark:hover:bg-brand-900/20 active-scale flex items-center justify-center gap-2 transition-colors">
+            <i class="fa-solid fa-plus"></i> Tambah Akun Baru
+          </button>
+        </div>
+      </div>
+      <!-- ===== BOTTOM SHEET: Transaction History ===== -->
+      <div class="bottom-sheet-overlay" :class="{ 'active': showHistorySheet }" @click.self="showHistorySheet = false">
+        <div class="bottom-sheet bottom-sheet--full" :class="{ 'active': showHistorySheet }">
+          <div class="bottom-sheet-handle"></div>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold">Riwayat Transaksi</h3>
+            <button @click="showHistorySheet = false" class="w-8 h-8 rounded-full bg-[var(--bg-primary)] flex items-center justify-center">
+              <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+          </div>
+          <div class="space-y-4 overflow-y-auto max-h-[65vh] pr-2 custom-scrollbar pb-6 relative">
+            <template x-for="group in groupedHistory" :key="group.date">
+              <div class="mb-4">
+                <!-- Sticky Date Header -->
+                <div class="sticky top-0 z-10 flex justify-center py-2 mb-2 pointer-events-none">
+                  <div class="bg-[var(--bg-card)] border border-[var(--border-color)] shadow-sm px-3 py-1 rounded-full backdrop-blur-md">
+                    <h4 class="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider" x-text="formatDate(group.date)"></h4>
+                  </div>
+                </div>
+                <!-- Transactions -->
+                <div class="space-y-2">
+                  <template x-for="(tx, index) in group.transactions" :key="tx.id">
+                    <div class="transaction-item cursor-pointer animate-fade-in-up stagger-item p-3 rounded-2xl border border-transparent hover:border-[var(--border-color)] transition-all" :style="`animation-delay: ${index * 40}ms`" @click="viewTransactionDetail(tx)">
+                      <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                           :style="'background-color: var(--cat-' + (getCategoryById(tx.category_id)?.color_index || 1) + ')'">
+                        <i :class="getCategoryById(tx.category_id)?.icon_class || 'fa-solid fa-circle'" class="text-sm text-gray-800 dark:text-white/90"></i>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-bold truncate text-[var(--text-primary)]" x-text="getCategoryById(tx.category_id)?.name || 'Lainnya'"></p>
+                        <p class="text-[11px] text-[var(--text-tertiary)] mt-0.5" x-text="tx.note || 'Tidak ada catatan'"></p>
+                      </div>
+                      <div class="text-right flex-shrink-0">
+                        <p class="text-sm font-extrabold" :class="{
+                          'text-emerald-500': tx.type === 'Income',
+                          'text-red-500': tx.type === 'Expense',
+                          'text-blue-500': tx.type === 'Transfer'
+                        }" x-text="(tx.type === 'Income' ? '+' : tx.type === 'Expense' ? '-' : '') + formatCurrency(tx.amount)"></p>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+            <div x-show="groupedHistory.length === 0" class="text-center py-10 text-[var(--text-tertiary)]">
+              <i class="fa-solid fa-receipt text-3xl mb-3 opacity-50"></i>
+              <p class="text-sm">Belum ada riwayat transaksi.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ===== BOTTOM SHEET: Add Transaction ===== -->
+      <div class="bottom-sheet-overlay" :class="{ 'active': showAddTransaction }" @click.self="showAddTransaction = false">
+        <div class="bottom-sheet bottom-sheet--tall" :class="{ 'active': showAddTransaction }">
+          <div class="bottom-sheet-handle"></div>
+
+          <!-- Transaction Type Tabs -->
+          <div class="flex bg-[var(--bg-primary)] rounded-xl p-1 mb-5">
+            <button @click="txType = 'Income'" class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all"
+                    :class="txType === 'Income' ? 'bg-emerald-500 text-white shadow-sm' : 'text-[var(--text-secondary)]'">
+              <i class="fa-solid fa-arrow-down mr-1"></i> Masuk
+            </button>
+            <button @click="txType = 'Expense'" class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all"
+                    :class="txType === 'Expense' ? 'bg-red-500 text-white shadow-sm' : 'text-[var(--text-secondary)]'">
+              <i class="fa-solid fa-arrow-up mr-1"></i> Keluar
+            </button>
+            <button @click="txType = 'Transfer'" class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all"
+                    :class="txType === 'Transfer' ? 'bg-blue-500 text-white shadow-sm' : 'text-[var(--text-secondary)]'">
+              <i class="fa-solid fa-right-left mr-1"></i> Transfer
+            </button>
+          </div>
+
+          <!-- Amount Display -->
+          <div class="text-center mb-4">
+            <p class="text-3xl font-extrabold" :class="{
+              'text-emerald-500': txType === 'Income',
+              'text-red-500': txType === 'Expense',
+              'text-blue-500': txType === 'Transfer'
+            }" x-text="'Rp' + (txAmount || '0').replace(/\B(?=(\d{3})+(?!\d))/g, '.')"></p>
+          </div>
+
+          <!-- Account Selection -->
+          <!-- Source Account Selection -->
+          <div x-show="txType !== 'Income'" class="mb-4">
+            <label class="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2 block">Dari Sumber Dana</label>
+            <div class="flex gap-3 overflow-x-auto pb-4 snap-x">
+              <template x-for="acc in accounts" :key="acc.id">
+                <div @click="txSourceAccount = acc.id" 
+                     class="snap-start flex-shrink-0 w-32 p-3 rounded-2xl border transition-all cursor-pointer"
+                     :class="txSourceAccount === acc.id ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30' : 'border-[var(--border-color)] bg-[var(--bg-primary)]'">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center mb-2 bg-brand-100 dark:bg-brand-900/50 text-brand-500">
+                    <i class="fa-solid fa-wallet text-xs"></i>
+                  </div>
+                  <p class="text-xs font-bold truncate" x-text="acc.name"></p>
+                  <p class="text-[10px] text-[var(--text-tertiary)] truncate" x-text="formatCurrency(acc.balance)" :class="{'!text-red-500 font-bold': acc.balance < 0}"></p>
+                </div>
+              </template>
+            </div>
+          </div>
+          
+          <!-- Destination Account Selection -->
+          <div x-show="txType !== 'Expense'" class="mb-4">
+            <label class="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2 block" x-text="txType === 'Income' ? 'Simpan Ke' : 'Ke Rekening'"></label>
+            <div class="flex gap-3 overflow-x-auto pb-4 snap-x">
+              <template x-for="acc in accounts" :key="acc.id">
+                <div @click="txDestAccount = acc.id" 
+                     class="snap-start flex-shrink-0 w-32 p-3 rounded-2xl border transition-all cursor-pointer"
+                     :class="txDestAccount === acc.id ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30' : 'border-[var(--border-color)] bg-[var(--bg-primary)]'">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center mb-2 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-500">
+                    <i class="fa-solid fa-wallet text-xs"></i>
+                  </div>
+                  <p class="text-xs font-bold truncate" x-text="acc.name"></p>
+                  <p class="text-[10px] text-[var(--text-tertiary)] truncate" x-text="formatCurrency(acc.balance)" :class="{'!text-red-500 font-bold': acc.balance < 0}"></p>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Category Selection (for Income/Expense) -->
+          <div x-show="txType !== 'Transfer'" class="mb-4">
+            <label class="text-[10px] text-[var(--text-tertiary)] mb-2 block">Kategori</label>
+            <div class="category-grid">
+              <template x-for="cat in filteredCategories" :key="cat.id">
+                <button @click="txCategory = cat.id" class="category-item" :class="{ 'selected': txCategory === cat.id }">
+                  <div class="category-icon w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-1 transition-all"
+                       :style="'background-color: var(--cat-' + cat.color_index + ')'">
+                    <i :class="cat.icon_class" class="text-sm" style="opacity:0.8"></i>
+                  </div>
+                  <span class="category-label text-[10px] text-[var(--text-secondary)] truncate block transition-colors" x-text="cat.name"></span>
+                </button>
+              </template>
+            </div>
+          </div>
+
+          <!-- Note -->
+          <input type="text" x-model="txNote" placeholder="Catatan (opsional)..." class="form-input w-full text-xs mb-4" />
+
+          <!-- Numpad -->
+          <div class="numpad numpad--compact">
+            <template x-for="key in ['1','2','3','4','5','6','7','8','9','000','0','del']" :key="key">
+              <button class="numpad-key active-scale numpad-key--sm" :class="{ 'numpad-key--action': key === 'del' }"
+                      @click="handleAmountKey(key)">
+                <template x-if="key === 'del'">
+                  <i class="fa-solid fa-delete-left"></i>
+                </template>
+                <template x-if="key !== 'del'">
+                  <span x-text="key"></span>
+                </template>
+              </button>
+            </template>
+          </div>
+
+          <!-- Save Button -->
+          <button @click="saveTransaction()" class="btn-primary active-scale w-full mt-4" :disabled="!txAmount || txAmount === '0'" id="btn-save-transaction">
+            <i class="fa-solid fa-check mr-2"></i> Simpan Transaksi
+          </button>
+        </div>
+      </div>
+      <!-- ===== BOTTOM SHEET: Notifications ===== -->
+      <div class="bottom-sheet-overlay" :class="{ 'active': showNotifications }" @click.self="showNotifications = false">
+        <div class="bottom-sheet" :class="{ 'active': showNotifications }">
+          <div class="bottom-sheet-handle"></div>
+          <h3 class="text-lg font-bold mb-4">Notifikasi</h3>
+          <div class="space-y-2" x-show="notifications.length > 0">
+            <template x-for="notif in notifications" :key="notif.id">
+              <div class="flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-primary)]">
+                <div class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center">
+                  <i class="fa-solid fa-bell text-brand-500 text-xs"></i>
+                </div>
+                <div class="flex-1">
+                  <p class="text-xs font-medium" x-text="notif.message"></p>
+                  <p class="text-[10px] text-[var(--text-tertiary)]" x-text="formatRelativeDate(notif.date)"></p>
+                </div>
+              </div>
+            </template>
+          </div>
+          <div x-show="notifications.length === 0" class="text-center py-8">
+            <i class="fa-solid fa-bell-slash text-2xl text-[var(--text-tertiary)] mb-2"></i>
+            <p class="text-xs text-[var(--text-tertiary)]">Belum ada notifikasi</p>
+          </div>
+        </div>
+      </div>
+      <!-- ===== BOTTOM SHEET: Add Account ===== -->
+      <div class="bottom-sheet-overlay" :class="{ 'active': showAddAccountSheet }" @click.self="showAddAccountSheet = false">
+        <div class="bottom-sheet" :class="{ 'active': showAddAccountSheet }">
+          <div class="bottom-sheet-handle"></div>
+          <h3 class="text-lg font-bold mb-4">Tambah Akun</h3>
+          <input type="text" x-model="newAccountName" placeholder="Nama akun (mis. BCA, GoPay)" class="form-input w-full mb-3" />
+          <div class="flex gap-2 mb-3">
+            <button @click="newAccountType = 'Bank'" class="flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all"
+                    :class="newAccountType === 'Bank' ? 'bg-brand-500 text-white border-brand-500' : 'bg-[var(--bg-primary)] border-[var(--border-color)]'">
+              <i class="fa-solid fa-building-columns mr-1"></i> Bank
+            </button>
+            <button @click="newAccountType = 'E-Wallet'" class="flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all"
+                    :class="newAccountType === 'E-Wallet' ? 'bg-brand-500 text-white border-brand-500' : 'bg-[var(--bg-primary)] border-[var(--border-color)]'">
+              <i class="fa-solid fa-wallet mr-1"></i> E-Wallet
+            </button>
+          </div>
+          <input type="number" x-model="newAccountBalance" placeholder="Saldo awal (opsional)" class="form-input w-full mb-4" />
+          <button @click="addNewAccount()" class="btn-primary active-scale w-full" :disabled="!newAccountName.trim()">
+            <i class="fa-solid fa-plus mr-2"></i> Tambah
+          </button>
+        </div>
+      </div>
+      <!-- ===== BOTTOM SHEET: Add Goal ===== -->
+      <div class="bottom-sheet-overlay" :class="{ 'active': showAddGoalSheet }" @click.self="showAddGoalSheet = false">
+        <div class="bottom-sheet" :class="{ 'active': showAddGoalSheet }">
+          <div class="bottom-sheet-handle"></div>
+          <h3 class="text-lg font-bold mb-4">Tambah Target</h3>
+          
+          <input type="text" x-model="newGoalTitle" placeholder="Judul target (mis. Liburan Bali)" class="form-input w-full mb-3" />
+          
+          <div class="flex gap-2 mb-3">
+            <button @click="newGoalType = 'Goal'" class="flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all"
+                    :class="newGoalType === 'Goal' ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-[var(--bg-primary)] border-[var(--border-color)]'">
+              <i class="fa-solid fa-bullseye mr-1"></i> Tabungan
+            </button>
+            <button @click="newGoalType = 'Bill'" class="flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all"
+                    :class="newGoalType === 'Bill' ? 'bg-amber-500 text-white border-amber-500' : 'bg-[var(--bg-primary)] border-[var(--border-color)]'">
+              <i class="fa-solid fa-file-invoice mr-1"></i> Tagihan
+            </button>
+          </div>
+
+          <!-- Target Amount Display -->
+          <div class="text-center mb-4">
+            <p class="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1">Jumlah Target</p>
+            <p class="text-3xl font-extrabold text-brand-500" x-text="'Rp' + (newGoalAmount || '0').replace(/\B(?=(\d{3})+(?!\d))/g, '.')"></p>
+          </div>
+
+          <!-- Numpad -->
+          <div class="numpad numpad--compact mb-4">
+            <template x-for="key in ['1','2','3','4','5','6','7','8','9','000','0','del']" :key="key">
+              <button class="numpad-key active-scale numpad-key--sm" :class="{ 'numpad-key--action': key === 'del' }"
+                      @click="handleGoalAmountKey(key)">
+                <template x-if="key === 'del'">
+                  <i class="fa-solid fa-delete-left"></i>
+                </template>
+                <template x-if="key !== 'del'">
+                  <span x-text="key"></span>
+                </template>
+              </button>
+            </template>
+          </div>
+
+          <button @click="addNewGoal()" class="btn-primary active-scale w-full" :disabled="!newGoalTitle.trim() || !newGoalAmount">
+            <i class="fa-solid fa-check mr-2"></i> Simpan Target
+          </button>
+        </div>
+      </div>
+      <!-- ===== BOTTOM SHEET: Add Contribution ===== -->
+      <div class="bottom-sheet-overlay" :class="{ 'active': showContributeSheet }" @click.self="showContributeSheet = false">
+        <div class="bottom-sheet" :class="{ 'active': showContributeSheet }">
+          <div class="bottom-sheet-handle"></div>
+          <h3 class="text-lg font-bold mb-2">Tambah Kontribusi</h3>
+          <p class="text-xs text-[var(--text-tertiary)] mb-4" x-text="selectedGoal?.title || ''"></p>
+          
+          <!-- Contribute Amount Display -->
+          <div class="text-center mb-4">
+            <p class="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1">Jumlah Kontribusi</p>
+            <p class="text-3xl font-extrabold text-emerald-500" x-text="'Rp' + (contributeAmount || '0').replace(/\B(?=(\d{3})+(?!\d))/g, '.')"></p>
+          </div>
+
+          <div class="mb-4">
+            <label class="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2 block">Pilih Sumber Dana</label>
+            <div class="flex gap-3 overflow-x-auto pb-4 snap-x">
+              <template x-for="acc in accounts" :key="acc.id">
+                <div @click="contributeAccount = acc.id" 
+                     class="snap-start flex-shrink-0 w-32 p-3 rounded-2xl border transition-all cursor-pointer"
+                     :class="contributeAccount === acc.id ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30' : 'border-[var(--border-color)] bg-[var(--bg-primary)]'">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center mb-2 bg-brand-100 dark:bg-brand-900/50 text-brand-500">
+                    <i class="fa-solid fa-wallet text-xs"></i>
+                  </div>
+                  <p class="text-xs font-bold truncate" x-text="acc.name"></p>
+                  <p class="text-[10px] text-[var(--text-tertiary)] truncate" x-text="formatCurrency(acc.balance)" :class="{'text-red-500': acc.balance < 0}"></p>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Numpad -->
+          <div class="numpad numpad--compact mb-4">
+            <template x-for="key in ['1','2','3','4','5','6','7','8','9','000','0','del']" :key="key">
+              <button class="numpad-key active-scale numpad-key--sm" :class="{ 'numpad-key--action': key === 'del' }"
+                      @click="handleContributeAmountKey(key)">
+                <template x-if="key === 'del'">
+                  <i class="fa-solid fa-delete-left"></i>
+                </template>
+                <template x-if="key !== 'del'">
+                  <span x-text="key"></span>
+                </template>
+              </button>
+            </template>
+          </div>
+
+          <button @click="contributeToGoal()" class="btn-primary active-scale w-full" :disabled="!contributeAmount || !contributeAccount">
+            <i class="fa-solid fa-plus mr-2"></i> Tambahkan
+          </button>
+        </div>
+      </div>
+      <!-- ===== BOTTOM SHEET: Edit Profile ===== -->
+      <div class="bottom-sheet-overlay" :class="{ 'active': showEditProfileSheet }" @click.self="showEditProfileSheet = false">
+        <div class="bottom-sheet" :class="{ 'active': showEditProfileSheet }">
+          <div class="bottom-sheet-handle"></div>
+          <h3 class="text-lg font-bold mb-4">Edit Profil</h3>
+          
+          <label class="text-[10px] text-[var(--text-tertiary)] mb-1 block">Nama Panggilan Anda</label>
+          <input type="text" x-model="editName" placeholder="Nama panggilan..." class="form-input w-full mb-3" />
+          
+          <label class="text-[10px] text-[var(--text-tertiary)] mb-1 block">PIN Anda (4 Digit)</label>
+          <input type="password" x-model="editUserPin" maxlength="4" placeholder="••••" class="form-input w-full mb-3" />
+          
+          <label class="text-[10px] text-[var(--text-tertiary)] mb-1 block">Nama Pasangan</label>
+          <input type="text" x-model="editPartnerName" placeholder="Nama Pasangan..." class="form-input w-full mb-3" />
+          
+          <label class="text-[10px] text-[var(--text-tertiary)] mb-1 block">PIN Pasangan (4 Digit)</label>
+          <input type="password" x-model="editPartnerPin" maxlength="4" placeholder="••••" class="form-input w-full mb-5" />
+
+          <button @click="saveProfile()" class="btn-primary active-scale w-full" :disabled="!editName.trim()">
+            <i class="fa-solid fa-check mr-2"></i> Simpan Profil
+          </button>
+        </div>
+      </div>
+
+      <!-- ===== BOTTOM SHEET: Manage Categories ===== -->
+      <div class="bottom-sheet-overlay" :class="{ 'active': showManageCategories }" @click.self="showManageCategories = false">
+        <div class="bottom-sheet bottom-sheet--tall" :class="{ 'active': showManageCategories }">
+          <div class="bottom-sheet-handle"></div>
+          <h3 class="text-lg font-bold mb-4">Kelola Kategori</h3>
+          
+          <div class="flex gap-2 mb-4">
+            <button @click="manageCategoryType = 'Expense'" class="flex-1 py-2 rounded-xl text-xs font-semibold border transition-all"
+                    :class="manageCategoryType === 'Expense' ? 'bg-red-500 text-white border-red-500' : 'bg-[var(--bg-primary)] border-[var(--border-color)]'">
+              Pengeluaran
+            </button>
+            <button @click="manageCategoryType = 'Income'" class="flex-1 py-2 rounded-xl text-xs font-semibold border transition-all"
+                    :class="manageCategoryType === 'Income' ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-[var(--bg-primary)] border-[var(--border-color)]'">
+              Pemasukan
+            </button>
+          </div>
+
+          <div class="mb-3">
+            <label class="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2 block">Pilih Ikon</label>
+            <div class="flex gap-3 overflow-x-auto pb-4 snap-x">
+              <template x-for="icon in iconOptions" :key="icon">
+                <div @click="selectedCategoryIcon = icon" 
+                     class="snap-start flex-shrink-0 w-10 h-10 rounded-xl border flex items-center justify-center transition-all cursor-pointer"
+                     :class="selectedCategoryIcon === icon ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30 text-brand-500' : 'border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-secondary)]'">
+                  <i :class="icon" class="text-sm"></i>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <div class="flex gap-2 mb-4">
+            <input type="text" x-model="newCategoryName" placeholder="Kategori baru..." class="form-input flex-1" />
+            <button @click="saveCategory()" class="btn-primary active-scale px-4" :disabled="!newCategoryName.trim()">
+              <i class="fa-solid" :class="editingCategoryId ? 'fa-check' : 'fa-plus'"></i>
+            </button>
+            <button x-show="editingCategoryId" @click="editingCategoryId = null; newCategoryName = ''; selectedCategoryIcon = 'fa-solid fa-tag'" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl px-4 transition-colors">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
+          <div class="space-y-2 overflow-y-auto max-h-[40vh] pr-1">
+            <template x-for="cat in categories.filter(c => c.type === manageCategoryType)" :key="cat.id">
+              <div class="flex items-center justify-between p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-color)]">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center" :style="'background-color: var(--cat-' + (cat.color_index || 1) + ')'">
+                    <i :class="cat.icon_class || cat.icon"></i>
+                  </div>
+                  <span class="text-sm font-semibold" x-text="cat.name"></span>
+                </div>
+                <div class="flex gap-1">
+                  <button @click="editCategory(cat)" class="text-blue-500 w-8 h-8 flex items-center justify-center hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full transition-colors">
+                    <i class="fa-solid fa-pen text-xs"></i>
+                  </button>
+                  <button @click="deleteCategory(cat.id)" class="text-red-500 w-8 h-8 flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors">
+                    <i class="fa-solid fa-trash-can text-xs"></i>
+                  </button>
+                </div>
+              </div>
+            </template>
+            <div x-show="categories.filter(c => c.type === manageCategoryType).length === 0" class="text-center py-4 text-xs text-[var(--text-tertiary)]">
+              Tidak ada kategori.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transaction Detail Bottom Sheet -->
+      <div class="bottom-sheet-overlay" :class="{ 'active': showTxDetail }" @click.self="showTxDetail = false">
+        <div class="bottom-sheet" :class="{ 'active': showTxDetail }">
+          <div class="bottom-sheet-handle"></div>
+          <h3 class="text-lg font-bold mb-4">Detail Transaksi</h3>
+          <template x-if="selectedTx">
+            <div>
+              <!-- Digital Receipt Style -->
+              <div class="relative bg-white dark:bg-gray-800 rounded-2xl border border-[var(--border-color)] shadow-xl mt-4 overflow-hidden">
+                <div class="pt-8 pb-4 flex flex-col items-center">
+                  <!-- Category Icon -->
+                  <div class="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
+                       :style="'background-color: var(--cat-' + (getCategoryById(selectedTx.category_id)?.color_index || 1) + ')'">
+                    <i :class="getCategoryById(selectedTx.category_id)?.icon_class || 'fa-solid fa-circle'" class="text-3xl text-gray-800 dark:text-white/90"></i>
+                  </div>
+                  
+                  <!-- Title & Amount -->
+                  <h4 class="font-extrabold text-xl text-[var(--text-primary)]" x-text="getCategoryById(selectedTx.category_id)?.name || 'Lainnya'"></h4>
+                  <p class="text-sm text-[var(--text-tertiary)] mb-4" x-text="formatTime(selectedTx.date) + ' • ' + formatDate(selectedTx.date.substring(0, 10))"></p>
+                  
+                  <p class="text-4xl font-black tracking-tighter" 
+                     :class="selectedTx.type === 'Income' ? 'text-emerald-500' : (selectedTx.type === 'Transfer' ? 'text-blue-500' : 'text-red-500')"
+                     x-text="(selectedTx.type === 'Income' ? '+' : '') + formatCurrency(selectedTx.amount)"></p>
+                </div>
+
+                <!-- Receipt Cut Divider -->
+                <div class="relative h-px w-full border-t-2 border-dashed border-[var(--border-color)] my-2">
+                   <!-- Circles for receipt effect -->
+                   <div class="absolute -left-3 -top-3 w-6 h-6 rounded-full bg-[var(--bg-card)]"></div>
+                   <div class="absolute -right-3 -top-3 w-6 h-6 rounded-full bg-[var(--bg-card)]"></div>
+                </div>
+
+                <!-- Receipt Details -->
+                <div class="p-6 pt-4 space-y-4">
+                  <div class="flex justify-between items-center text-sm">
+                    <span class="text-[var(--text-tertiary)]">Sumber Dana</span>
+                    <span class="font-bold text-[var(--text-primary)]" x-text="getAccountById(selectedTx.account_id)?.name || '-'"></span>
+                  </div>
+                  <template x-if="selectedTx.type === 'Transfer'">
+                    <div class="flex justify-between items-center text-sm border-t border-dashed border-[var(--border-color)] pt-4">
+                      <span class="text-[var(--text-tertiary)]">Ke Rekening</span>
+                      <span class="font-bold text-[var(--text-primary)]" x-text="getAccountById(selectedTx.to_account_id)?.name || '-'"></span>
+                    </div>
+                  </template>
+                  <div class="flex justify-between items-center text-sm border-t border-dashed border-[var(--border-color)] pt-4">
+                    <span class="text-[var(--text-tertiary)]">Catatan</span>
+                    <span class="font-bold text-[var(--text-primary)] text-right max-w-[60%] line-clamp-2" x-text="selectedTx.note || '-'"></span>
+                  </div>
+                  <div class="flex justify-between items-center text-sm border-t border-dashed border-[var(--border-color)] pt-4">
+                    <span class="text-[var(--text-tertiary)]">Tipe Transaksi</span>
+                    <span class="font-bold text-[var(--text-primary)]" x-text="selectedTx.type === 'Income' ? 'Pemasukan' : (selectedTx.type === 'Transfer' ? 'Transfer' : 'Pengeluaran')"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Clear Data Confirmation Modal (SweetAlert Style) -->
+      <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 transition-opacity duration-300" 
+           :class="showClearDataModal ? 'opacity-100 visible' : 'opacity-0 invisible'"
+           style="background-color: rgba(0,0,0,0.5);"
+           @click.self="showClearDataModal = false">
+        
+        <div class="bg-[var(--bg-card)] rounded-3xl w-full max-w-xs p-6 shadow-2xl transform transition-transform duration-300"
+             :class="showClearDataModal ? 'scale-100 translate-y-0' : 'scale-90 translate-y-4'">
+          
+          <div class="text-center mb-6">
+            <div class="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4 border-[4px] border-red-50 dark:border-red-900/10">
+              <i class="fa-solid fa-triangle-exclamation text-red-500 text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Hapus Data?</h3>
+            <p class="text-sm text-[var(--text-tertiary)]">
+              Tindakan ini akan menghapus permanen seluruh riwayat transaksi, rekening, dan target Anda.
+            </p>
+          </div>
+          
+          <div class="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-xl p-3 mb-5">
+            <p class="text-[10px] text-red-600 dark:text-red-400 font-bold mb-2 text-center uppercase tracking-wider">
+              Ketik "YA, HAPUS"
+            </p>
+            <input type="text" x-model="clearDataConfirmText" class="form-input w-full text-center tracking-widest font-bold !bg-white dark:!bg-gray-800 border-red-200 focus:border-red-500 focus:ring-red-500" placeholder="YA, HAPUS">
+          </div>
+
+          <div class="flex gap-3">
+            <button @click="showClearDataModal = false; clearDataConfirmText = ''" class="flex-1 py-3 rounded-xl font-bold bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-secondary)]">
+              Batal
+            </button>
+            <button @click="clearDataHousehold()" class="flex-1 py-3 rounded-xl font-bold bg-red-500 text-white transition-opacity" :class="{ 'opacity-50 cursor-not-allowed': clearDataConfirmText !== 'YA, HAPUS' }">
+              Hapus
+            </button>
+          </div>
+        </div>
+      </div>
+
+    <!-- ==================== BOTTOM NAVIGATION ==================== -->
+    <nav class="bottom-nav glass-nav" x-show="['home','analytics','goals','profile'].includes(screen)">
+      <button @click="navigateTo('home')" class="bottom-nav-item" :class="{ 'active': screen === 'home' }" id="nav-home">
+        <i class="fa-solid fa-house text-lg"></i>
+        <span>Beranda</span>
+      </button>
+      <button @click="navigateTo('analytics')" class="bottom-nav-item" :class="{ 'active': screen === 'analytics' }" id="nav-analytics">
+        <i class="fa-solid fa-chart-pie text-lg"></i>
+        <span>Analisis</span>
+      </button>
+      <button @click="showAddTransaction = true" class="bottom-nav-item bottom-nav-item--add" id="nav-add">
+        <div class="w-12 h-12 -mt-5 rounded-2xl bg-brand-500 flex items-center justify-center shadow-lg shadow-brand-500/30">
+          <i class="fa-solid fa-plus text-white text-lg"></i>
+        </div>
+      </button>
+      <button @click="navigateTo('goals')" class="bottom-nav-item" :class="{ 'active': screen === 'goals' }" id="nav-goals">
+        <i class="fa-solid fa-piggy-bank text-lg"></i>
+        <span>Target</span>
+      </button>
+      <button @click="navigateTo('profile')" class="bottom-nav-item" :class="{ 'active': screen === 'profile' }" id="nav-profile">
+        <i class="fa-solid fa-user text-lg"></i>
+        <span>Profil</span>
+      </button>
+    </nav>
+
+  </div><!-- end #app -->
+
+  <!-- ==================== APP SCRIPT ==================== -->
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js",
+        "firebase/analytics": "https://www.gstatic.com/firebasejs/12.14.0/firebase-analytics.js"
+      }
+    }
+  </script>
+  <script src="js/app.js?v=4"></script>
+
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/fundmate/sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
