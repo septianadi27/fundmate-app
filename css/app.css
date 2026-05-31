@@ -175,11 +175,11 @@
   --cat-12: #1A2540;
 }
 
+:root {
   /* ── Layout ── */
   --app-max-width: 430px;
   --bottom-nav-height: 4.5rem;
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
-
 }
 
 /* ── Fallback for browsers without light-dark() ── */
