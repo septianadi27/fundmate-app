@@ -33,6 +33,7 @@ window.fundmate = function() {
     joinCode: '',
     useDummyData: true,
     showJoinSheet: false,
+    deferredPrompt: null,
 
     // ==================== DATA ====================
     accounts: [],
@@ -53,6 +54,8 @@ window.fundmate = function() {
     historyFilterValue: null,
     showTxDetail: false,
     showClearDataModal: false,
+    showInstallTutorial: false,
+    showAboutSheet: false,
     clearDataConfirmText: '',
     selectedTx: null,
 

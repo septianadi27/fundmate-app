@@ -808,6 +808,15 @@
             <i class="fa-solid fa-chevron-right text-xs text-[var(--text-tertiary)]"></i>
           </button>
 
+          <!-- About Me -->
+          <button @click="showAboutSheet = true" class="settings-item mt-2">
+            <div class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+              <i class="fa-solid fa-circle-info text-indigo-500 text-sm"></i>
+            </div>
+            <span class="flex-1 text-sm font-medium text-left">Tentang FundMate</span>
+            <i class="fa-solid fa-chevron-right text-xs text-[var(--text-tertiary)]"></i>
+          </button>
+
           <!-- Clear Data Household -->
           <button @click="showClearDataModal = true" class="settings-item w-full mt-4 !bg-red-50 dark:!bg-red-900/20 border border-red-100 dark:border-red-900/30">
             <div class="w-9 h-9 rounded-xl bg-red-100 dark:bg-red-900/50 flex items-center justify-center">
@@ -1292,6 +1301,73 @@
         </div>
       </div>
 
+
+
+      <!-- ===== BOTTOM SHEET: About FundMate ===== -->
+      <div class="bottom-sheet-overlay" :class="{ 'active': showAboutSheet }" @click.self="showAboutSheet = false">
+        <div class="bottom-sheet bottom-sheet--tall" :class="{ 'active': showAboutSheet }">
+          <div class="bottom-sheet-handle"></div>
+          <h3 class="text-lg font-bold mb-4">Tentang FundMate</h3>
+          
+          <div class="bento-card p-5 mb-5 text-center">
+            <div class="w-16 h-16 mx-auto bg-brand-100 dark:bg-brand-900/30 rounded-2xl flex items-center justify-center mb-3">
+              <i class="fa-solid fa-wallet text-3xl text-brand-500"></i>
+            </div>
+            <h4 class="text-base font-bold mb-2">FundMate v1.0.0</h4>
+            <p class="text-sm text-[var(--text-secondary)] leading-relaxed">
+              Asisten cerdas pencatat keuangan pribadi dan rumah tangga. Desain minimalis, cepat, dan bisa berkolaborasi secara real-time.
+            </p>
+          </div>
+
+          <h4 class="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-3">Panduan Cepat</h4>
+          <div class="space-y-3 mb-6">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-500">
+                <i class="fa-solid fa-chart-pie text-xs"></i>
+              </div>
+              <p class="text-sm flex-1">Pantau arus kas bulanan di menu Analisis.</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-500">
+                <i class="fa-solid fa-piggy-bank text-xs"></i>
+              </div>
+              <p class="text-sm flex-1">Wujudkan impian finansial di menu Target.</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-500">
+                <i class="fa-solid fa-people-roof text-xs"></i>
+              </div>
+              <p class="text-sm flex-1">Bagikan catatan dengan pasangan via Household.</p>
+            </div>
+          </div>
+
+          <h4 class="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-3">Pertanyaan Umum (FAQ)</h4>
+          <div class="space-y-4 mb-8">
+            <div>
+              <p class="text-sm font-bold mb-1">Bagaimana cara mengundang pasangan?</p>
+              <p class="text-sm text-[var(--text-secondary)] leading-relaxed">Buka menu Profil, buat "Share Link", lalu kirimkan tautan tersebut ke pasangan Anda.</p>
+            </div>
+            <div>
+              <p class="text-sm font-bold mb-1">Apakah data saya aman?</p>
+              <p class="text-sm text-[var(--text-secondary)] leading-relaxed">Sangat aman! Data Anda tersinkronisasi di server Cloud Firebase terenkripsi secara waktu nyata.</p>
+            </div>
+            <div>
+              <p class="text-sm font-bold mb-1">Apakah aplikasi ini berbayar?</p>
+              <p class="text-sm text-[var(--text-secondary)] leading-relaxed">Tidak, FundMate sepenuhnya gratis dan bersumber terbuka (Open Source).</p>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-[var(--border-color)] text-center">
+            <p class="text-xs text-[var(--text-tertiary)] mb-4">Dibuat dengan ❤️ oleh Septian Adi</p>
+            <a href="https://github.com/septianadi27/fundmate-app" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold rounded-xl py-3 hover:opacity-90 transition-opacity">
+              <i class="fa-brands fa-github text-lg"></i>
+              <span>Kunjungi Repositori GitHub</span>
+            </a>
+          </div>
+
+          <div class="pb-6"></div>
+        </div>
+      </div>
 
       <!-- ===== BOTTOM SHEET: PWA Install Tutorial ===== -->
       <div class="bottom-sheet-overlay" :class="{ 'active': showInstallTutorial }" @click.self="showInstallTutorial = false">
