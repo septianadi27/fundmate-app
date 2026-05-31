@@ -799,6 +799,15 @@
             </select>
           </div>
 
+          <!-- PWA Install -->
+          <button @click="installPWA()" class="settings-item">
+            <div class="w-9 h-9 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+              <i class="fa-solid fa-download text-orange-500 text-sm"></i>
+            </div>
+            <span class="flex-1 text-sm font-medium text-left">Install Aplikasi</span>
+            <i class="fa-solid fa-chevron-right text-xs text-[var(--text-tertiary)]"></i>
+          </button>
+
           <!-- Clear Data Household -->
           <button @click="showClearDataModal = true" class="settings-item w-full mt-4 !bg-red-50 dark:!bg-red-900/20 border border-red-100 dark:border-red-900/30">
             <div class="w-9 h-9 rounded-xl bg-red-100 dark:bg-red-900/50 flex items-center justify-center">
@@ -1283,6 +1292,44 @@
         </div>
       </div>
 
+
+      <!-- ===== BOTTOM SHEET: PWA Install Tutorial ===== -->
+      <div class="bottom-sheet-overlay" :class="{ 'active': showInstallTutorial }" @click.self="showInstallTutorial = false">
+        <div class="bottom-sheet" :class="{ 'active': showInstallTutorial }">
+          <div class="bottom-sheet-handle"></div>
+          <h3 class="text-lg font-bold mb-2">Install Aplikasi</h3>
+          <p class="text-sm text-[var(--text-tertiary)] mb-6">Dapatkan pengalaman penuh seperti aplikasi Native di HP Anda tanpa harus mengunduh dari App Store atau Play Store!</p>
+          
+          <!-- iOS Safari -->
+          <div class="mb-6">
+            <h4 class="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-3">Untuk iPhone (Safari)</h4>
+            <div class="flex items-start gap-4 mb-3">
+              <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0 text-blue-500 font-bold">1</div>
+              <p class="text-sm leading-relaxed">Ketuk ikon <b class="text-blue-500"><i class="fa-solid fa-arrow-up-from-bracket mx-1"></i> Bagikan (Share)</b> di menu bar bawah peramban Safari Anda.</p>
+            </div>
+            <div class="flex items-start gap-4">
+              <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0 text-blue-500 font-bold">2</div>
+              <p class="text-sm leading-relaxed">Gulir ke bawah dan ketuk menu <b class="text-blue-500"><i class="fa-solid fa-plus-square mx-1"></i> Tambah ke Layar Utama (Add to Home Screen)</b>.</p>
+            </div>
+          </div>
+
+          <!-- Android Chrome -->
+          <div>
+            <h4 class="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-3">Untuk Android (Chrome)</h4>
+            <div class="flex items-start gap-4 mb-3">
+              <div class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0 text-emerald-500 font-bold">1</div>
+              <p class="text-sm leading-relaxed">Ketuk ikon <b class="text-emerald-500"><i class="fa-solid fa-ellipsis-vertical mx-1"></i> Menu (Tiga Titik)</b> di sudut kanan atas peramban Anda.</p>
+            </div>
+            <div class="flex items-start gap-4">
+              <div class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0 text-emerald-500 font-bold">2</div>
+              <p class="text-sm leading-relaxed">Pilih menu <b class="text-emerald-500"><i class="fa-solid fa-download mx-1"></i> Install Aplikasi (Install App)</b> atau <b>Tambahkan ke Layar Utama</b>.</p>
+            </div>
+          </div>
+
+          <button @click="showInstallTutorial = false" class="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-primary)] font-bold rounded-xl py-3 mt-6">Tutup</button>
+        </div>
+      </div>
+
       <!-- Clear Data Confirmation Modal (SweetAlert Style) -->
       <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 transition-opacity duration-300" 
            :class="showClearDataModal ? 'opacity-100 visible' : 'opacity-0 invisible'"
@@ -1304,16 +1351,16 @@
           
           <div class="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-xl p-3 mb-5">
             <p class="text-[10px] text-red-600 dark:text-red-400 font-bold mb-2 text-center uppercase tracking-wider">
-              Ketik "YA, HAPUS"
+              Ketik "IYA"
             </p>
-            <input type="text" x-model="clearDataConfirmText" class="form-input w-full text-center tracking-widest font-bold !bg-white dark:!bg-gray-800 border-red-200 focus:border-red-500 focus:ring-red-500" placeholder="YA, HAPUS">
+            <input type="text" x-model="clearDataConfirmText" class="form-input w-full text-center tracking-widest font-bold !bg-white dark:!bg-gray-800 border-red-200 focus:border-red-500 focus:ring-red-500" placeholder="IYA">
           </div>
 
           <div class="flex gap-3">
             <button @click="showClearDataModal = false; clearDataConfirmText = ''" class="flex-1 py-3 rounded-xl font-bold bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-secondary)]">
               Batal
             </button>
-            <button @click="clearDataHousehold()" class="flex-1 py-3 rounded-xl font-bold bg-red-500 text-white transition-opacity" :class="{ 'opacity-50 cursor-not-allowed': clearDataConfirmText !== 'YA, HAPUS' }">
+            <button @click="clearDataHousehold()" class="flex-1 py-3 rounded-xl font-bold bg-red-500 text-white transition-opacity" :class="{ 'opacity-50 cursor-not-allowed': clearDataConfirmText !== 'IYA' }">
               Hapus
             </button>
           </div>

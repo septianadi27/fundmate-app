@@ -183,36 +183,7 @@
 }
 
 /* ── Fallback for browsers without light-dark() ── */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-primary:       #0F1117;
-    --bg-card:          #1A1D28;
-    --bg-card-elevated: #232636;
-    --text-primary:     #F1F5F9;
-    --text-secondary:   #94A3B8;
-    --text-tertiary:    #64748B;
-    --accent-primary:   #60A5FA;
-    --accent-secondary: #38BDF8;
-    --accent-gradient:  linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
-    --border-color:     #2D3348;
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
-    --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
-    --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
 
-    --cat-1:  #3D2030;
-    --cat-2:  #252A45;
-    --cat-3:  #1A3329;
-    --cat-4:  #3D3520;
-    --cat-5:  #1E2A45;
-    --cat-6:  #3D2035;
-    --cat-7:  #1A2D38;
-    --cat-8:  #3D3525;
-    --cat-9:  #2A2545;
-    --cat-10: #1A3A2B;
-    --cat-11: #3D2020;
-    --cat-12: #1A2540;
-  }
-}
 
 /* ────────────────────────────────────────────────────────────
    2. Reset & Base Styles
@@ -234,6 +205,7 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  touch-action: manipulation;
 }
 
 body {

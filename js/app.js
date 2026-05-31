@@ -398,9 +398,14 @@ window.fundmate = function() {
       try {
         await import('./firebase.js');
       } catch (err) {
-        console.warn("Firebase failed to load. Running in offline-only mode.", err);
-        this.showToast("Berjalan dalam mode offline", "info", "fa-wifi");
+        console.warn('Firebase module not loaded yet, running locally.');
       }
+
+      // PWA Install Prompt
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        this.deferredPrompt = e;
+      });
 
       if (window.fb && window.fb.initAuth) {
         try {
@@ -622,6 +627,20 @@ window.fundmate = function() {
       this.seedLocalData();
       this.screen = 'home';
       this.showToast('Berhasil bergabung! 🎉', 'success', 'fa-circle-check');
+    },
+
+
+    // ==================== PWA INSTALL ====================
+    async installPWA() {
+      if (this.deferredPrompt) {
+        this.deferredPrompt.prompt();
+        const { outcome } = await this.deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          this.deferredPrompt = null;
+        }
+      } else {
+        this.showInstallTutorial = true;
+      }
     },
 
     // ==================== LOCAL DATA (Demo Mode) ====================
